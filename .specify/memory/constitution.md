@@ -1,50 +1,69 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Abacus Constitution
+
+Abacus is a personal web app for tracking income and expenses. Built for single-user-first; multi-user-ready from day one. This document captures the non-negotiables. Keep it short — extend only when you've felt the pain.
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Money math is non-negotiable
+- All monetary amounts stored as `Decimal` (Prisma `Decimal` type), never `Float`/`Number`.
+- Currency code stored alongside every monetary value (ISO 4217, e.g., `USD`).
+- Display formatting happens at the UI edge; never round in the database or business logic.
+- Transfers between accounts are atomic: a single transaction creates two ledger entries (debit + credit) in one DB transaction or it fails.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Type safety end-to-end
+- TypeScript strict mode. No `any`. No `@ts-ignore` without a one-line WHY comment.
+- Zod schemas at every boundary: request bodies, env vars, external responses.
+- Prisma is the single source of truth for the data model.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Validate at boundaries, trust internally
+- Every API route validates input with Zod before touching business logic.
+- Internal functions trust their typed inputs — no defensive re-validation.
+- Auth is checked at the route boundary, not sprinkled through helpers.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Test the money paths
+- Unit tests (Vitest) required for: money math, transfer logic, recurring-transaction generation, category aggregation.
+- E2E tests (Playwright) required for: signup → login → logout, create transaction, transfer between accounts.
+- Other code: tests welcome, not required.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Spec-driven development
+- Every feature flows through Spec Kit: `spec.md` → `plan.md` → `tasks.md` → implementation.
+- No code without an approved spec.
+- One feature in flight at a time. No parallel branches in `.specify/specs/`.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Technology Stack
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+- **Framework:** Next.js 15 (App Router) + React 19
+- **Language:** TypeScript (strict)
+- **Database:** PostgreSQL 16+
+- **ORM:** Prisma
+- **Auth:** Auth.js (NextAuth) with Credentials provider (email + password). OAuth deferred.
+- **Password hashing:** Argon2id or bcrypt (min 12 rounds)
+- **UI:** Tailwind CSS + shadcn/ui
+- **Charts:** Recharts
+- **Validation:** Zod
+- **Testing:** Vitest (unit) + Playwright (E2E)
+- **Containerization:** Docker + docker-compose for local dev
+- **Package manager:** pnpm
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## Conventions
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+- **Folder layout:** `app/` (routes), `lib/` (business logic), `components/` (UI), `db/` (Prisma schema + migrations), `tests/`
+- **Money helpers:** all monetary operations go through `lib/money/` — no direct arithmetic on amounts elsewhere.
+- **Migrations:** every Prisma schema change ships with a generated migration. No `db push` against committed code.
+- **Secrets:** `.env.local` only; never committed. `.env.example` documents required keys.
+- **API responses:** consistent shape `{ data } | { error: { code, message } }`. HTTP status reflects outcome.
+- **Dates/times:** stored UTC; rendered in user's timezone (from user profile).
+- **CSV exports:** UTF-8, header row, ISO-8601 dates, decimal point (not locale-specific).
+
+## Subagent Workflow
+
+- **spec-writer** drafts `spec.md` (what + why, no how). Status: `READY_FOR_ARCH`.
+- **architect** drafts `plan.md` (data model, API, file layout) against this constitution. Status: `READY_FOR_BUILD`.
+- **implementer** executes one task at a time. Self-heals lint/typo failures, stops on real failures. Status: `DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED`.
+- **money-reviewer** runs on any change touching `lib/money/`, `db/`, `prisma/`, or transaction logic. Returns `PASS / FAIL` with specifics.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution is a context anchor, not a bureaucracy. Update it when reality changes. No formal approval process — this is a personal project.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 0.1.0 | **Ratified**: 2026-05-16 | **Last Amended**: 2026-05-16
