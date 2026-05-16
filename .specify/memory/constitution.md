@@ -1,6 +1,38 @@
+<!--
+Sync Impact Report
+==================
+Version change: 0.1.0 → 0.2.0 (MINOR — material stance change; no numbered principle removed or redefined)
+
+Modified sections:
+- Intro paragraph: "Built for single-user-first; multi-user-ready from day one." → "Built for multi-user from day one. Any visitor may create an account; no first-user gating."
+
+Numbered principles (I–V): unchanged
+Technology Stack: unchanged
+Conventions: unchanged
+Subagent Workflow: unchanged
+Governance: unchanged
+
+Templates requiring updates (manual follow-up):
+- .specify/templates/spec-template.md: ✅ no stance language present (template references principles by ID only)
+- .specify/templates/plan-template.md: ✅ no stance language present
+- .specify/templates/tasks-template.md: ✅ no stance language present
+
+Feature artifacts requiring follow-up (handled in next /speckit-specify revision):
+- ⚠ specs/003-auth/spec.md — references "single-user-first" in multiple FRs (FR-012 + US5) and Why section
+- ⚠ specs/003-auth/plan.md — references "single-user-first" stance and 4-layer gate
+- ⚠ specs/003-auth/tasks.md — references single-user gate and "single-user" verbiage
+- ⚠ specs/003-auth/research.md — references single-user assumption
+- ⚠ specs/003-auth/data-model.md — references single-user constraint
+- ⚠ specs/003-auth/quickstart.md — references single-user setup
+- ⚠ app/(auth)/signup/page.tsx — UI string "Abacus is a single-user app"
+- ⚠ specs/001-project-scaffolding/spec.md — historical reference; leave as-is (frozen record)
+
+Follow-up TODOs: none deferred.
+-->
+
 # Abacus Constitution
 
-Abacus is a personal web app for tracking income and expenses. Built for single-user-first; multi-user-ready from day one. This document captures the non-negotiables. Keep it short — extend only when you've felt the pain.
+Abacus is a personal web app for tracking income and expenses. Built for multi-user from day one. Any visitor may create an account; no first-user gating. This document captures the non-negotiables. Keep it short — extend only when you've felt the pain.
 
 ## Core Principles
 
@@ -54,6 +86,7 @@ Abacus is a personal web app for tracking income and expenses. Built for single-
 - **API responses:** consistent shape `{ data } | { error: { code, message } }`. HTTP status reflects outcome.
 - **Dates/times:** stored UTC; rendered in user's timezone (from user profile).
 - **CSV exports:** UTF-8, header row, ISO-8601 dates, decimal point (not locale-specific).
+- **Data scoping:** every domain row is owned by a `userId`; queries MUST filter by the current session's user. There is no shared/global data surface in product features.
 
 ## Subagent Workflow
 
@@ -66,4 +99,4 @@ Abacus is a personal web app for tracking income and expenses. Built for single-
 
 This constitution is a context anchor, not a bureaucracy. Update it when reality changes. No formal approval process — this is a personal project.
 
-**Version**: 0.1.0 | **Ratified**: 2026-05-16 | **Last Amended**: 2026-05-16
+**Version**: 0.2.0 | **Ratified**: 2026-05-16 | **Last Amended**: 2026-05-16

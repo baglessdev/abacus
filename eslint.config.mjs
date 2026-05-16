@@ -36,7 +36,13 @@ const config = [
   },
   {
     files: ["**/*.ts", "**/*.tsx"],
-    ignores: ["lib/env.ts", "tests/setup.ts", "prisma.config.ts", "playwright.config.ts"],
+    ignores: [
+      "lib/env.ts",
+      "tests/setup.ts",
+      "tests/e2e/**",
+      "prisma.config.ts",
+      "playwright.config.ts",
+    ],
     rules: {
       "no-restricted-syntax": processEnvRestriction,
     },

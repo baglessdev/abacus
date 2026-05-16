@@ -9,9 +9,10 @@ import { Sidebar } from "@/components/shell/sidebar"
 
 type AppShellProps = {
   children: ReactNode
+  user?: { email: string }
 }
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, user }: AppShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const mainRef = useRef<HTMLElement>(null)
 
@@ -19,7 +20,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className="min-h-screen md:flex">
       <Sidebar />
       <div className="flex min-h-screen flex-1 flex-col">
-        <Header onOpenMobileNav={() => setMobileNavOpen(true)} />
+        <Header onOpenMobileNav={() => setMobileNavOpen(true)} user={user} />
         <main ref={mainRef} tabIndex={-1} className="flex-1 p-6 outline-none md:p-8">
           {children}
         </main>

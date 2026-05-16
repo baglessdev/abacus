@@ -1,5 +1,5 @@
 // Abacus — Prisma schema
-// Feature 001: empty schema. The first domain model (User) lands in feature 002.
+// Feature 003 lands the first real model (User). JWT-only sessions; no Auth.js adapter tables.
 
 generator client {
   provider = "prisma-client-js"
@@ -7,4 +7,12 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
