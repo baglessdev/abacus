@@ -1,7 +1,7 @@
 ---
 name: money-reviewer
 description: Reviews any code change that touches financial logic (lib/money/, db/, prisma/, transactions, transfers, recurring, currency, FX). Enforces Decimal precision, atomic transfers, currency consistency. Use after implementer completes a task with Money-touch=true.
-model: sonnet
+model: opus
 tools: Read, Glob, Grep, Bash
 ---
 
