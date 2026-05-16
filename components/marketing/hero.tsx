@@ -9,7 +9,7 @@ type HeroProps = {
 export function Hero({ isAuthenticated }: HeroProps) {
   return (
     <section className="mx-auto max-w-3xl px-6 py-24 text-center md:py-32">
-      <h1 className="text-4xl font-semibold tracking-tight sm:text-6xl">
+      <h1 className="text-5xl font-semibold tracking-tighter sm:text-7xl">
         Personal finance, finally clear
       </h1>
       <p className="mt-6 text-lg text-muted-foreground">
@@ -17,9 +17,14 @@ export function Hero({ isAuthenticated }: HeroProps) {
       </p>
       <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
         {isAuthenticated ? (
-          <Button asChild size="lg">
-            <Link href="/dashboard">Go to dashboard</Link>
-          </Button>
+          <>
+            <Button asChild size="lg">
+              <Link href="/dashboard">Go to dashboard</Link>
+            </Button>
+            <Button asChild size="lg" variant="ghost">
+              <Link href="#changelog">Learn more</Link>
+            </Button>
+          </>
         ) : (
           <>
             <Button asChild size="lg">
@@ -27,6 +32,9 @@ export function Hero({ isAuthenticated }: HeroProps) {
             </Button>
             <Button asChild size="lg" variant="outline">
               <Link href="/login">Log in</Link>
+            </Button>
+            <Button asChild size="lg" variant="ghost">
+              <Link href="#changelog">Learn more</Link>
             </Button>
           </>
         )}

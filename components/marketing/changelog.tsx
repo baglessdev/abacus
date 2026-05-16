@@ -49,7 +49,11 @@ function formatDate(iso: string): string {
 
 export function Changelog() {
   return (
-    <section className="mx-auto max-w-3xl px-6 pb-24" aria-labelledby="changelog-heading">
+    <section
+      id="changelog"
+      className="mx-auto max-w-3xl px-6 pb-24"
+      aria-labelledby="changelog-heading"
+    >
       <div className="mb-8">
         <h2 id="changelog-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
           What&apos;s new
@@ -59,10 +63,36 @@ export function Changelog() {
       <ol className="space-y-6 border-l border-border pl-6">
         {entries.map((entry) => (
           <li key={`${entry.date}-${entry.title}`} className="relative">
-            <span
-              className="absolute -left-[1.6875rem] top-2 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary"
-              aria-hidden="true"
-            />
+            {/*
+              Bead-shaped dot: a short horizontal rod-stub + filled circle (bead).
+              Geometry (research.md R17): line = horizontal rod; circle = the bead.
+              Positioned to align with the border-l rail at the same offset as the
+              previous plain circle (-left-[1.6875rem] top-2).
+              currentColor is set via text-primary on the parent <li> context — the
+              span inherits it so both the rod and the bead fill use the violet primary.
+            */}
+            <span className="absolute -left-[1.6875rem] top-2 text-primary" aria-hidden="true">
+              <svg
+                width="10"
+                height="14"
+                viewBox="0 0 10 14"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {/* Rod stub — short horizontal line */}
+                <line
+                  x1="0"
+                  y1="9"
+                  x2="10"
+                  y2="9"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                {/* Bead — filled circle centered above the rod */}
+                <circle cx="5" cy="5" r="3" fill="currentColor" />
+              </svg>
+            </span>
             <time
               dateTime={entry.date}
               className="text-xs font-medium uppercase tracking-wide text-muted-foreground"

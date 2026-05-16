@@ -1,6 +1,16 @@
 import type { Config } from "tailwindcss"
 import animate from "tailwindcss-animate"
 
+const defaultSansStack = [
+  "-apple-system",
+  "BlinkMacSystemFont",
+  '"Segoe UI"',
+  "Roboto",
+  '"Helvetica Neue"',
+  "Arial",
+  "sans-serif",
+]
+
 const config: Config = {
   darkMode: "class",
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
@@ -11,6 +21,9 @@ const config: Config = {
       screens: { "2xl": "1400px" },
     },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-inter)", ...defaultSansStack],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -45,6 +58,8 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        "money-positive": "hsl(var(--money-positive))",
+        "money-negative": "hsl(var(--money-negative))",
       },
       borderRadius: {
         lg: "var(--radius)",

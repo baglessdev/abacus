@@ -1,13 +1,12 @@
-import { Settings } from "lucide-react"
-
 import { EmptyState } from "@/components/shell/empty-state"
+import { SettingsIllustration } from "@/components/illustrations/settings-illustration"
 
 export default function SettingsPage() {
   return (
     <EmptyState
-      title="Settings"
-      description="Profile, preferences, and data export will land in a future feature."
-      icon={Settings}
+      illustration={<SettingsIllustration className="h-32 w-32 text-primary" />}
+      title="Settings are coming soon"
+      description="Update your profile, change your password, and manage your preferences."
     />
   )
 }

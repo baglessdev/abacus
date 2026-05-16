@@ -1,11 +1,9 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { Wallet } from "lucide-react"
 
 import { listAccounts, unarchiveAccount } from "@/lib/accounts/actions"
 import type { AccountDTO } from "@/lib/accounts/serialize"
-import { formatAmount } from "@/lib/money"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
@@ -19,6 +17,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { EmptyState } from "@/components/shell/empty-state"
+import { Money } from "@/components/money/money"
+import { AccountsIllustration } from "@/components/illustrations/accounts-illustration"
 import { AccountFormSheet } from "./account-form-sheet"
 import { ArchiveConfirmDialog } from "./archive-confirm-dialog"
 
@@ -133,7 +133,7 @@ export function AccountsList({ initialAccounts }: AccountsListProps) {
         <EmptyState
           title="No accounts yet"
           description="An account is where Abacus tracks the money you hold — a checking account, a savings account, a credit card. Add your first one to get started."
-          icon={Wallet}
+          illustration={<AccountsIllustration className="h-32 w-32 text-primary" />}
           action={{
             label: "Add your first account",
             onClick: openCreateSheet,
@@ -200,7 +200,12 @@ export function AccountsList({ initialAccounts }: AccountsListProps) {
                       <TableCell>{account.type}</TableCell>
                       <TableCell>{account.currency}</TableCell>
                       <TableCell className="text-right">
-                        {formatAmount(account.startingBalance, account.currency)}
+                        <Money
+                          amount={account.startingBalance}
+                          currency={account.currency}
+                          prominent
+                          align="right"
+                        />
                       </TableCell>
                       <TableCell className="text-right">
                         {isArchived ? (

@@ -5,6 +5,7 @@ import { useRef, useState, type ReactNode } from "react"
 import { Header } from "@/components/shell/header"
 import { MobileNav } from "@/components/shell/mobile-nav"
 import { RouteFocus } from "@/components/shell/route-focus"
+import { ShellFooter } from "@/components/shell/shell-footer"
 import { Sidebar } from "@/components/shell/sidebar"
 
 type AppShellProps = {
@@ -24,6 +25,7 @@ export function AppShell({ children, user }: AppShellProps) {
         <main ref={mainRef} tabIndex={-1} className="flex-1 p-6 outline-none md:p-8">
           {children}
         </main>
+        <ShellFooter />
       </div>
       <MobileNav open={mobileNavOpen} onOpenChange={setMobileNavOpen} />
       <RouteFocus mainRef={mainRef} />

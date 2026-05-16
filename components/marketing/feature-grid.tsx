@@ -33,7 +33,9 @@ export function FeatureGrid() {
         {features.map((f) => (
           <Card key={f.title} className="p-2">
             <CardHeader>
-              <f.icon className="h-6 w-6 text-primary" aria-hidden="true" />
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
+                <f.icon className="h-5 w-5" aria-hidden="true" />
+              </div>
               <CardTitle className="mt-3">{f.title}</CardTitle>
             </CardHeader>
             <CardContent>
