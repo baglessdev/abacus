@@ -67,13 +67,29 @@ jobs:
         run: pnpm db:generate
 
       - name: Typecheck
+        id: typecheck
         run: pnpm typecheck
 
       - name: Lint
+        id: lint
         run: pnpm lint
 
       - name: Format check
+        id: format
         run: pnpm format:check
+
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "## Static analysis"
+            echo ""
+            echo "| Check | Outcome |"
+            echo "| --- | --- |"
+            echo "| Typecheck (\`pnpm typecheck\`) | ${{ steps.typecheck.outcome == 'success' && '✅ passed' || '❌ failed' }} |"
+            echo "| Lint (\`pnpm lint\`) | ${{ steps.lint.outcome == 'success' && '✅ passed' || steps.lint.outcome == 'skipped' && '⏭️ skipped' || '❌ failed' }} |"
+            echo "| Format (\`pnpm format:check\`) | ${{ steps.format.outcome == 'success' && '✅ passed' || steps.format.outcome == 'skipped' && '⏭️ skipped' || '❌ failed' }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   unit:
     name: Unit tests (Vitest)
@@ -114,7 +130,19 @@ jobs:
         run: pnpm db:generate
 
       - name: Run unit tests
+        id: unit
         run: pnpm test
+
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "## Unit tests (Vitest)"
+            echo ""
+            echo "Outcome: ${{ steps.unit.outcome == 'success' && '✅ passed' || '❌ failed' }}"
+            echo ""
+            echo "Full results are in the **Run unit tests** step output above."
+          } >> "$GITHUB_STEP_SUMMARY"
 
   e2e:
     name: E2E tests (Playwright)
@@ -182,10 +210,11 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run E2E tests
+        id: e2e
         run: pnpm test:e2e
 
-      - name: Upload Playwright report on failure
-        if: failure()
+      - name: Upload Playwright report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
@@ -193,3 +222,16 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 14
+
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "## E2E tests (Playwright)"
+            echo ""
+            echo "Outcome: ${{ steps.e2e.outcome == 'success' && '✅ passed' || '❌ failed' }}"
+            echo ""
+            echo "📦 The full HTML report is uploaded as the **playwright-report** artifact"
+            echo "(download from the **Summary** tab of this run). Failures (if any) also"
+            echo "appear as inline annotations on the PR via the GitHub reporter."
+          } >> "$GITHUB_STEP_SUMMARY"
