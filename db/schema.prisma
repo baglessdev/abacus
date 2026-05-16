@@ -1,5 +1,6 @@
 // Abacus — Prisma schema
 // Feature 003 lands the first real model (User). JWT-only sessions; no Auth.js adapter tables.
+// Feature 004 adds Account + AccountType (the first money-touching domain model).
 
 generator client {
   provider = "prisma-client-js"
@@ -10,9 +11,36 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String    @id @default(cuid())
+  email        String    @unique
   passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  accounts     Account[] // back-relation from feature 004
+}
+
+model Account {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String      @db.VarChar(80)
+  type            AccountType
+  currency        String      @db.Char(3)
+  startingBalance Decimal     @db.Decimal(20, 8)
+  archivedAt      DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([userId, archivedAt])
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CREDIT
+  CASH
+  INVESTMENT
+  OTHER
 }
