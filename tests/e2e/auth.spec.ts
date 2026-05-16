@@ -58,9 +58,9 @@ test("shell navigates across all 5 dashboard routes when authenticated", async (
 
   const routes = [
     { path: "/dashboard/accounts", label: "Accounts", h1: "No accounts yet" },
-    { path: "/dashboard/transactions", label: "Transactions", h1: "No transactions yet" },
-    { path: "/dashboard/budgets", label: "Budgets", h1: "No budgets yet" },
-    { path: "/dashboard/settings", label: "Settings", h1: "Settings" },
+    { path: "/dashboard/transactions", label: "Transactions", h1: "Transactions are coming soon" },
+    { path: "/dashboard/budgets", label: "Budgets", h1: "Budgets are coming soon" },
+    { path: "/dashboard/settings", label: "Settings", h1: "Settings are coming soon" },
   ] as const
 
   for (const r of routes) {

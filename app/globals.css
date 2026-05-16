@@ -24,6 +24,8 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 262 83% 58%;
     --radius: 0.5rem;
+    --money-positive: 145 50% 35%;
+    --money-negative: 0 65% 40%;
   }
 
   .dark {
@@ -46,6 +48,8 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 258 90% 66%;
+    --money-positive: 145 50% 60%;
+    --money-negative: 0 70% 65%;
   }
 }
 
