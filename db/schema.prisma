@@ -1,0 +1,10 @@
+// Abacus — Prisma schema
+// Feature 001: empty schema. The first domain model (User) lands in feature 002.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}

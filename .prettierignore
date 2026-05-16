@@ -1,0 +1,11 @@
+node_modules
+.next
+pnpm-lock.yaml
+db/migrations
+playwright-report
+test-results
+coverage
+public
+specs/**
+.specify/**
+CLAUDE.md
