@@ -35,6 +35,10 @@ test-results/
 
 # Prisma
 prisma/migrations/dev.db*
+db/migrations/dev.db*
+
+# TypeScript build cache
+*.tsbuildinfo
 
 # Misc
 *.local
