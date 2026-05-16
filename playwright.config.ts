@@ -5,9 +5,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  reporter: process.env.CI
-    ? [["github"], ["html", { open: "never" }], ["list"]]
-    : "list",
+  reporter: process.env.CI ? [["github"], ["html", { open: "never" }], ["list"]] : "list",
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
