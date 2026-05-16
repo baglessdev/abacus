@@ -1,17 +1,22 @@
 import { Compass } from "lucide-react"
+import Link from "next/link"
 
-import { AppShell } from "@/components/shell/app-shell"
-import { EmptyState } from "@/components/shell/empty-state"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 
 export default function NotFound() {
   return (
-    <AppShell>
-      <EmptyState
-        title="Page not found"
-        description="The page you're looking for doesn't exist or has moved."
-        icon={Compass}
-        action={{ label: "Back to dashboard", href: "/" }}
-      />
-    </AppShell>
+    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-6">
+      <Card className="flex w-full max-w-md flex-col items-center gap-4 p-8 text-center">
+        <Compass className="h-12 w-12 text-muted-foreground" aria-hidden="true" />
+        <h1 className="text-2xl font-semibold tracking-tight">Page not found</h1>
+        <p className="text-sm text-muted-foreground">
+          The page you&rsquo;re looking for doesn&rsquo;t exist or has moved.
+        </p>
+        <Button asChild>
+          <Link href="/">Back to home</Link>
+        </Button>
+      </Card>
+    </div>
   )
 }

@@ -14,7 +14,7 @@ type NavLinkProps = {
 }
 
 function isActive(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/"
+  if (href === "/dashboard") return pathname === "/dashboard"
   return pathname === href || pathname.startsWith(href + "/")
 }
 

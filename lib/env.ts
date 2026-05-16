@@ -9,8 +9,8 @@ const envSchema = z.object({
       "DATABASE_URL must start with postgres:// or postgresql://",
     ),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  AUTH_SECRET: z.string().optional(),
-  AUTH_URL: z.string().url().optional(),
+  AUTH_SECRET: z.string().min(32, "AUTH_SECRET must be at least 32 characters"),
+  AUTH_URL: z.string().url(),
 })
 
 export type Env = z.infer<typeof envSchema>
