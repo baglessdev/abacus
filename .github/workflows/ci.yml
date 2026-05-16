@@ -32,6 +32,10 @@ jobs:
   static:
     name: Static analysis (typecheck / lint / format)
     runs-on: ubuntu-24.04
+    env:
+      # prisma.config.ts requires DATABASE_URL to resolve even for `prisma generate`,
+      # which doesn't actually connect. Placeholder value satisfies the env() lookup.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -74,6 +78,11 @@ jobs:
   unit:
     name: Unit tests (Vitest)
     runs-on: ubuntu-24.04
+    env:
+      # prisma.config.ts requires DATABASE_URL even for `prisma generate`.
+      # Vitest's tests/setup.ts also seeds DATABASE_URL/AUTH_SECRET/AUTH_URL
+      # with placeholders if missing, but those come too late for `prisma generate`.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
     steps:
       - name: Checkout
         uses: actions/checkout@v4
