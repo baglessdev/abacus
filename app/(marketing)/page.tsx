@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 
+import { Changelog } from "@/components/marketing/changelog"
 import { FeatureGrid } from "@/components/marketing/feature-grid"
 import { Hero } from "@/components/marketing/hero"
 import { auth } from "@/lib/auth"
@@ -18,6 +19,7 @@ export default async function MarketingHomePage() {
     <>
       <Hero isAuthenticated={isAuthenticated} />
       <FeatureGrid />
+      <Changelog />
     </>
   )
 }
