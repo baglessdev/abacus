@@ -7,10 +7,12 @@
 # deploys will source AUTH_SECRET from secrets.AUTH_SECRET when deploy CI lands
 # in a separate chore.
 #
-# Setup order note: actions/setup-node MUST run before pnpm/action-setup because
-# pnpm 11.x requires Node >=22.13 to install itself, and the GitHub runner
-# defaults to Node 20. We then configure the pnpm store cache manually because
-# actions/setup-node's `cache: pnpm` option needs pnpm pre-installed.
+# Setup note: pnpm/action-setup@v4 uses the runner's pre-installed Node 20 to
+# bootstrap itself (via process.execPath, regardless of PATH), which fails
+# because pnpm 11.x requires Node >=22.13. Instead we install Node 24 first
+# (from .nvmrc), then install pnpm via `npm install -g` so it runs under Node 24.
+# We configure the pnpm store cache manually because actions/setup-node's
+# `cache: pnpm` option needs pnpm pre-installed at setup-node time.
 
 name: CI
 
@@ -40,9 +42,7 @@ jobs:
           node-version-file: .nvmrc
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 11.1.2
+        run: npm install -g pnpm@11.1.2
 
       - name: Get pnpm store directory
         shell: bash
@@ -84,9 +84,7 @@ jobs:
           node-version-file: .nvmrc
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 11.1.2
+        run: npm install -g pnpm@11.1.2
 
       - name: Get pnpm store directory
         shell: bash
@@ -140,9 +138,7 @@ jobs:
           node-version-file: .nvmrc
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 11.1.2
+        run: npm install -g pnpm@11.1.2
 
       - name: Get pnpm store directory
         shell: bash
