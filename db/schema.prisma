@@ -1,6 +1,7 @@
 // Abacus — Prisma schema
 // Feature 003 lands the first real model (User). JWT-only sessions; no Auth.js adapter tables.
 // Feature 004 adds Account + AccountType (the first money-touching domain model).
+// Feature 006 adds Category + CategoryKind (the second domain model; non-money-touching).
 
 generator client {
   provider = "prisma-client-js"
@@ -17,7 +18,8 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  accounts     Account[] // back-relation from feature 004
+  accounts     Account[]  // back-relation from feature 004
+  categories   Category[] // back-relation from feature 006
 }
 
 model Account {
@@ -43,4 +45,29 @@ enum AccountType {
   CASH
   INVESTMENT
   OTHER
+}
+
+model Category {
+  id         String       @id @default(cuid())
+  userId     String
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentId   String?
+  parent     Category?    @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children   Category[]   @relation("CategoryHierarchy")
+  name       String       @db.VarChar(80)
+  kind       CategoryKind
+  color      String       @db.VarChar(32)
+  icon       String       @db.VarChar(64)
+  archivedAt DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([userId, archivedAt])
+  @@index([userId, parentId])
+}
+
+enum CategoryKind {
+  INCOME
+  EXPENSE
 }

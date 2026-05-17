@@ -6,7 +6,8 @@ import { redirect } from "next/navigation"
 import { signIn, signOut } from "@/lib/auth"
 import { hashPassword } from "@/lib/auth/password"
 import { loginSchema, signupSchema } from "@/lib/auth/schemas"
-import { createUser } from "@/lib/auth/user"
+import prisma from "@/lib/prisma"
+import { DEFAULT_CATEGORIES } from "@/lib/categories/seed"
 
 type FieldErrors<K extends string> = Partial<Record<K, string[]>>
 
@@ -63,7 +64,46 @@ export async function signUp(formData: FormData): Promise<SignUpResult> {
 
   try {
     const passwordHash = await hashPassword(password)
-    await createUser({ email, passwordHash })
+    // Wrap user creation + category seed in a single transaction (SC-008, FR-012).
+    // If any step fails, the entire transaction rolls back — a signed-up user with
+    // zero categories is NEVER a reachable state.
+    await prisma.$transaction(async (tx) => {
+      // Step 1: Create the user row
+      const newUser = await tx.user.create({ data: { email, passwordHash } })
+
+      // Step 2: Insert the 9 top-level category rows
+      await tx.category.createMany({
+        data: DEFAULT_CATEGORIES.map((c) => ({
+          userId: newUser.id,
+          name: c.name,
+          kind: c.kind,
+          color: c.color,
+          icon: c.icon,
+          parentId: null,
+        })),
+      })
+
+      // Step 3: Find Food's id so we can set parentId on its children
+      const food = await tx.category.findFirst({
+        where: { userId: newUser.id, name: "Food", parentId: null },
+      })
+
+      // Step 4: Insert the child rows under Food
+      const foodDef = DEFAULT_CATEGORIES.find((c) => c.name === "Food")
+      const foodChildren = foodDef?.children ?? []
+      if (foodChildren.length > 0 && food) {
+        await tx.category.createMany({
+          data: foodChildren.map((child) => ({
+            userId: newUser.id,
+            name: child.name,
+            kind: "EXPENSE" as const,
+            color: child.color,
+            icon: child.icon,
+            parentId: food.id,
+          })),
+        })
+      }
+    })
   } catch (err) {
     if (err instanceof Error && "code" in err && (err as { code?: string }).code === "P2002") {
       return { error: { code: "USER_ALREADY_EXISTS", message: USER_EXISTS_MESSAGE } }

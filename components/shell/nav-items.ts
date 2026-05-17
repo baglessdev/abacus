@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   PieChart,
   Settings,
+  Tags,
   Wallet,
   type LucideIcon,
 } from "lucide-react"
@@ -26,11 +27,12 @@ const transactions: NavItem = {
   icon: ArrowLeftRight,
 }
 const budgets: NavItem = { href: "/dashboard/budgets", label: "Budgets", icon: PieChart }
+const categories: NavItem = { href: "/dashboard/categories", label: "Categories", icon: Tags }
 const settings: NavItem = { href: "/dashboard/settings", label: "Settings", icon: Settings }
 
 export const navGroups: readonly NavGroup[] = [
   { label: "TRACK", items: [dashboard, accounts, transactions] },
-  { label: "MANAGE", items: [budgets, settings] },
+  { label: "MANAGE", items: [budgets, categories, settings] },
 ] as const
 
 // Back-compat: flat list for any caller that needs it.
