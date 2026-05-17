@@ -18,7 +18,9 @@ test.describe.configure({ mode: "serial" })
 
 test.beforeAll(async () => {
   // Truncate in FK dependency order:
-  // Category and Account both reference User → delete them first, then User.
+  // Transaction references Account and Category (Restrict FKs) → delete transactions first.
+  // Category and Account both reference User → delete them before User.
+  await prisma.transaction.deleteMany({})
   await prisma.category.deleteMany({})
   await prisma.account.deleteMany({})
   await prisma.user.deleteMany({})

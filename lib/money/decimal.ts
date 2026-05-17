@@ -33,3 +33,14 @@ export function isZero(a: Money): boolean {
 export function isNegative(a: Money): boolean {
   return a.isNegative()
 }
+
+/**
+ * Sum an array of monetary values without precision loss.
+ * Empty array returns new Money(0).
+ * Pure function — no Prisma dependency (FR-028, constitution Principle I).
+ *
+ * Usage: sumAmounts([new Money("100"), new Money("-50"), new Money("25")]) → new Money("75")
+ */
+export function sumAmounts(amounts: readonly Money[]): Money {
+  return amounts.reduce((acc, a) => acc.plus(a), new Money(0))
+}

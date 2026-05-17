@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { allowsNegativeStartingBalance, validateStartingBalance } from "@/lib/money/validate"
+import {
+  allowsNegativeStartingBalance,
+  validateStartingBalance,
+  validateTransactionAmount,
+} from "@/lib/money/validate"
 
 describe("allowsNegativeStartingBalance — FR-006 / FR-022 / SC-010", () => {
   it("returns true for CREDIT", () => {
@@ -154,6 +158,170 @@ describe("validateStartingBalance — FR-006 / FR-022 / SC-010", () => {
 
     it("rejects 'abc'", () => {
       const result = validateStartingBalance({ type: "CHECKING", currency: "USD", amount: "abc" })
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.code).toBe("not_a_number")
+      }
+    })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// validateTransactionAmount — FR-008, FR-009, research.md R3, constitution Principle IV
+// ---------------------------------------------------------------------------
+
+describe("validateTransactionAmount — FR-008 / FR-009 / R3 / Principle IV", () => {
+  // Success paths
+  describe("success paths", () => {
+    it("INCOME with amount='100' → ok", () => {
+      const result = validateTransactionAmount({ type: "INCOME", amount: "100", currency: "USD" })
+      expect(result.ok).toBe(true)
+    })
+
+    it("INCOME with amount='0.01' → ok (smallest positive)", () => {
+      const result = validateTransactionAmount({ type: "INCOME", amount: "0.01", currency: "USD" })
+      expect(result.ok).toBe(true)
+    })
+
+    it("EXPENSE with amount='-50' → ok", () => {
+      const result = validateTransactionAmount({ type: "EXPENSE", amount: "-50", currency: "USD" })
+      expect(result.ok).toBe(true)
+    })
+
+    it("EXPENSE with amount='-0.01' → ok (smallest negative)", () => {
+      const result = validateTransactionAmount({
+        type: "EXPENSE",
+        amount: "-0.01",
+        currency: "USD",
+      })
+      expect(result.ok).toBe(true)
+    })
+
+    it("TRANSFER with amount='100' → ok (positive magnitude, queries layer signs legs)", () => {
+      const result = validateTransactionAmount({
+        type: "TRANSFER",
+        amount: "100",
+        currency: "USD",
+      })
+      expect(result.ok).toBe(true)
+    })
+
+    it("TRANSFER with amount='-100' → ok (negative magnitude also allowed for TRANSFER)", () => {
+      const result = validateTransactionAmount({
+        type: "TRANSFER",
+        amount: "-100",
+        currency: "USD",
+      })
+      expect(result.ok).toBe(true)
+    })
+  })
+
+  // sign_mismatch
+  describe("sign_mismatch", () => {
+    it("INCOME with amount='-100' → sign_mismatch", () => {
+      const result = validateTransactionAmount({
+        type: "INCOME",
+        amount: "-100",
+        currency: "USD",
+      })
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.code).toBe("sign_mismatch")
+      }
+    })
+
+    it("EXPENSE with amount='50' → sign_mismatch", () => {
+      const result = validateTransactionAmount({ type: "EXPENSE", amount: "50", currency: "USD" })
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.code).toBe("sign_mismatch")
+      }
+    })
+  })
+
+  // zero_amount
+  describe("zero_amount", () => {
+    it("TRANSFER with amount='0' → zero_amount", () => {
+      const result = validateTransactionAmount({ type: "TRANSFER", amount: "0", currency: "USD" })
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.code).toBe("zero_amount")
+      }
+    })
+
+    it("INCOME with amount='0' → zero_amount", () => {
+      const result = validateTransactionAmount({ type: "INCOME", amount: "0", currency: "USD" })
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.code).toBe("zero_amount")
+      }
+    })
+
+    it("EXPENSE with amount='0' → zero_amount", () => {
+      const result = validateTransactionAmount({ type: "EXPENSE", amount: "0", currency: "USD" })
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.code).toBe("zero_amount")
+      }
+    })
+  })
+
+  // too_many_decimals
+  describe("too_many_decimals", () => {
+    it("INCOME with amount='1.234' for USD → too_many_decimals (USD max 2)", () => {
+      const result = validateTransactionAmount({
+        type: "INCOME",
+        amount: "1.234",
+        currency: "USD",
+      })
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.code).toBe("too_many_decimals")
+      }
+    })
+
+    it("EXPENSE with amount='-1.5' for JPY → too_many_decimals (JPY max 0)", () => {
+      const result = validateTransactionAmount({
+        type: "EXPENSE",
+        amount: "-1.5",
+        currency: "JPY",
+      })
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.code).toBe("too_many_decimals")
+      }
+    })
+
+    it("TRANSFER with amount='1.234' for BHD → ok (BHD max 3)", () => {
+      const result = validateTransactionAmount({
+        type: "TRANSFER",
+        amount: "1.234",
+        currency: "BHD",
+      })
+      expect(result.ok).toBe(true)
+    })
+  })
+
+  // not_a_number
+  describe("not_a_number", () => {
+    it("amount='abc' → not_a_number", () => {
+      const result = validateTransactionAmount({ type: "INCOME", amount: "abc", currency: "USD" })
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.code).toBe("not_a_number")
+      }
+    })
+
+    it("amount='' (empty) → not_a_number", () => {
+      const result = validateTransactionAmount({ type: "EXPENSE", amount: "", currency: "USD" })
+      expect(result.ok).toBe(false)
+      if (!result.ok) {
+        expect(result.code).toBe("not_a_number")
+      }
+    })
+
+    it("amount='1e5' (scientific notation) → not_a_number", () => {
+      const result = validateTransactionAmount({ type: "INCOME", amount: "1e5", currency: "USD" })
       expect(result.ok).toBe(false)
       if (!result.ok) {
         expect(result.code).toBe("not_a_number")

@@ -200,8 +200,9 @@ export function AccountsList({ initialAccounts }: AccountsListProps) {
                       <TableCell>{account.type}</TableCell>
                       <TableCell>{account.currency}</TableCell>
                       <TableCell className="text-right">
+                        {/* Live balance = startingBalance + Σ(non-archived transactions). Feature 007 T020. */}
                         <Money
-                          amount={account.startingBalance}
+                          amount={account.balance}
                           currency={account.currency}
                           prominent
                           align="right"

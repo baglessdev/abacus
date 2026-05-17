@@ -1,4 +1,4 @@
-import { type AccountType } from "@prisma/client"
+import { type AccountType, type TransactionType } from "@prisma/client"
 
 import { getCurrency } from "@/lib/money/currencies"
 
@@ -70,6 +70,103 @@ export function validateStartingBalance(input: {
       ok: false,
       code: "negative_not_allowed",
       message: `A ${type.charAt(0) + type.slice(1).toLowerCase()} account cannot have a negative starting balance.`,
+    }
+  }
+
+  return { ok: true }
+}
+
+// ---------------------------------------------------------------------------
+// validateTransactionAmount (feature 007)
+// ---------------------------------------------------------------------------
+
+type TransactionAmountValidationCode =
+  | "not_a_number"
+  | "zero_amount"
+  | "sign_mismatch"
+  | "too_many_decimals"
+
+type ValidateTransactionAmountResult =
+  | { ok: true }
+  | { ok: false; code: TransactionAmountValidationCode; message: string }
+
+/**
+ * Validates a transaction amount string against the given TransactionType and currency.
+ *
+ * Rules (research.md R3, FR-008, FR-009):
+ *   1. The string must be a parseable decimal (sign + digits + optional decimal point + digits).
+ *      Code: `not_a_number`.
+ *   2. The amount must not be zero. Code: `zero_amount`.
+ *   3. Sign-must-match-type:
+ *      - `type === "INCOME"` → amount > 0; else `sign_mismatch`.
+ *      - `type === "EXPENSE"` → amount < 0; else `sign_mismatch`.
+ *      - `type === "TRANSFER"` → no sign requirement (each leg carries its own sign); but
+ *        amount !== 0 still applies. The transfer form sends a positive magnitude; the
+ *        queries layer signs both legs internally. No `sign_mismatch` error for TRANSFER.
+ *   4. Currency-aware decimal-place check (reuses the same logic as validateStartingBalance).
+ *      Code: `too_many_decimals`.
+ *
+ * Callers must pass an already-uppercased ISO 4217 currency code.
+ */
+export function validateTransactionAmount(input: {
+  type: TransactionType
+  amount: string
+  currency: string
+}): ValidateTransactionAmountResult {
+  const { type, amount, currency } = input
+  const trimmed = amount.trim()
+
+  // Step 1: parseability — signed or unsigned decimal.
+  if (!/^-?\d+(\.\d+)?$/.test(trimmed)) {
+    return {
+      ok: false,
+      code: "not_a_number",
+      message: "Enter a valid amount (e.g., 100.00 or -50.00).",
+    }
+  }
+
+  // Step 2: zero rejection (all types).
+  const numericValue = parseFloat(trimmed)
+  if (numericValue === 0) {
+    return {
+      ok: false,
+      code: "zero_amount",
+      message: "Amount must not be zero.",
+    }
+  }
+
+  // Step 3: sign-must-match-type (INCOME and EXPENSE only; TRANSFER has no sign requirement).
+  if (type === "INCOME" && numericValue < 0) {
+    return {
+      ok: false,
+      code: "sign_mismatch",
+      message: "Income amount must be positive.",
+    }
+  }
+  if (type === "EXPENSE" && numericValue > 0) {
+    return {
+      ok: false,
+      code: "sign_mismatch",
+      message: "Expense amount must be negative.",
+    }
+  }
+
+  // Step 4: currency-aware decimal-place rule (identical logic to validateStartingBalance).
+  const currencyRecord = getCurrency(currency)
+  if (currencyRecord !== undefined) {
+    const dotIndex = trimmed.indexOf(".")
+    if (dotIndex !== -1) {
+      const fractionalDigits = trimmed.length - dotIndex - 1
+      if (fractionalDigits > currencyRecord.decimals) {
+        return {
+          ok: false,
+          code: "too_many_decimals",
+          message:
+            currencyRecord.decimals === 0
+              ? `${currency} does not support decimal places.`
+              : `${currency} supports at most ${currencyRecord.decimals} decimal place${currencyRecord.decimals === 1 ? "" : "s"}.`,
+        }
+      }
     }
   }
 

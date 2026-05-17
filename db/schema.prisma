@@ -2,6 +2,7 @@
 // Feature 003 lands the first real model (User). JWT-only sessions; no Auth.js adapter tables.
 // Feature 004 adds Account + AccountType (the first money-touching domain model).
 // Feature 006 adds Category + CategoryKind (the second domain model; non-money-touching).
+// Feature 007 adds Transaction + TransactionType (the third domain model; the keystone money-correctness feature).
 
 generator client {
   provider = "prisma-client-js"
@@ -18,8 +19,9 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  accounts     Account[]  // back-relation from feature 004
-  categories   Category[] // back-relation from feature 006
+  accounts     Account[]     // back-relation from feature 004
+  categories   Category[]    // back-relation from feature 006
+  transactions Transaction[] // back-relation from feature 007
 }
 
 model Account {
@@ -33,6 +35,8 @@ model Account {
   archivedAt      DateTime?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+
+  transactions Transaction[] // back-relation from feature 007
 
   @@index([userId])
   @@index([userId, archivedAt])
@@ -62,6 +66,8 @@ model Category {
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
 
+  transactions Transaction[] // back-relation from feature 007
+
   @@index([userId])
   @@index([userId, archivedAt])
   @@index([userId, parentId])
@@ -70,4 +76,48 @@ model Category {
 enum CategoryKind {
   INCOME
   EXPENSE
+}
+
+// ---------------------------------------------------------------------------
+// Feature 007 — Transaction + TransactionType
+// ---------------------------------------------------------------------------
+
+model Transaction {
+  id              String          @id @default(cuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId       String
+  account         Account         @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  categoryId      String?
+  category        Category?       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  // date: calendar-day only (Postgres DATE). Normalized to UTC midnight at the Zod boundary
+  // (normalizeToUtcDay in lib/transactions/dates.ts). @db.Date strips the time component at
+  // the storage layer. If @db.Date causes Prisma 7 serialization quirks (date returned with
+  // local-TZ time component), fall back to DateTime without @db.Date — the normalizeToUtcDay
+  // boundary helper already enforces UTC midnight on the way in. (data-model.md §Date handling)
+  date            DateTime        @db.Date
+  // amount: signed Decimal. INCOME > 0; EXPENSE < 0; TRANSFER: source < 0, dest > 0.
+  // Sign is load-bearing; constitution Principle I; sign-must-match-type enforced at Zod boundary.
+  amount          Decimal         @db.Decimal(20, 8)
+  currency        String          @db.Char(3)
+  type            TransactionType
+  payee           String?         @db.VarChar(120)
+  notes           String?         @db.VarChar(500)
+  // transferGroupId: server-generated cuid shared by both TRANSFER legs; null for INCOME/EXPENSE.
+  // The two-leg invariant is enforced structurally via prisma.$transaction (research.md R3, R4).
+  transferGroupId String?
+  archivedAt      DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([userId, date])
+  @@index([userId, accountId, date])
+  @@index([userId, categoryId])
+  @@index([userId, transferGroupId])
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
 }
