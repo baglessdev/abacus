@@ -30,7 +30,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "seed:demo-user": "tsx scripts/seed-demo-user.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.0.2",
@@ -83,6 +84,7 @@
     "prisma": "^7.8.0",
     "tailwindcss": "^3.4.19",
     "tailwindcss-animate": "^1.0.7",
+    "tsx": "^4.22.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.6"
   }
