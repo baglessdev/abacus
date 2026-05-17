@@ -17,7 +17,9 @@ const prisma = new PrismaClient({
 test.describe.configure({ mode: "serial" })
 
 test.beforeAll(async () => {
-  // Truncate Account first (FK references User), then User.
+  // Truncate in FK dependency order:
+  // Transaction references Account and Category; Account and Category reference User.
+  await prisma.transaction.deleteMany({})
   await prisma.account.deleteMany({})
   await prisma.user.deleteMany({})
 })

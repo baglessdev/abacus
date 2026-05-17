@@ -272,11 +272,12 @@ export async function listAccounts(
   }
 
   // Step 2: Query (no mutation → no revalidatePath)
+  // Note: listAccountsForUser now returns AccountDTO[] with live balances (feature 007 T020).
   try {
-    const rows = await listAccountsForUser(session.user.id, {
+    const dtos = await listAccountsForUser(session.user.id, {
       includeArchived: opts.includeArchived ?? false,
     })
-    return { data: { accounts: rows.map(serializeAccount) } }
+    return { data: { accounts: dtos } }
   } catch {
     return errorEnvelope("internal_error")
   }
