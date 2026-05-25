@@ -50,12 +50,18 @@ export type ListTransactionsFilters = {
   categoryId?: string
   type?: "INCOME" | "EXPENSE" | "TRANSFER"
   includeArchived?: boolean
+  /** When set, limits the result to at most this many rows (applied via Prisma `take`). */
+  limit?: number
 }
 
 /**
  * List transactions for the given user, applying optional filters.
  * Default sort: date DESC, createdAt DESC — deterministic, stable (FR-020).
  * Excludes archived rows unless includeArchived is true (FR-019).
+ *
+ * @param filters.limit — when set, applies Prisma `take: limit` to cap the result (feature 008,
+ *   used by <RecentTransactionsWidget> with limit: 10). Absent or omitted → full result set
+ *   returned, backward-compatible with all existing call sites from feature 007.
  */
 export async function listTransactionsForUser(
   userId: string,
@@ -85,6 +91,7 @@ export async function listTransactionsForUser(
   return prisma.transaction.findMany({
     where,
     orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+    ...(filters.limit ? { take: filters.limit } : {}),
   })
 }
 
@@ -466,6 +473,56 @@ export async function setArchivedAtForUser(userId: string, id: string, value: Da
 
   if (result.count === 0) return null
   return prisma.transaction.findFirst({ where: { id, userId } })
+}
+
+// ---------------------------------------------------------------------------
+// sumIncomeExpenseByCurrencyForUser
+// ---------------------------------------------------------------------------
+
+/**
+ * Aggregate INCOME and EXPENSE transaction amounts by currency for the given user
+ * within the provided date range [dateFrom, dateTo).
+ *
+ * TRANSFER rows are excluded at the SQL WHERE level (FR-010, FR-015).
+ * Archived rows are excluded (FR-013, archivedAt: null).
+ *
+ * Returns one row per (currency, type) combination. Each row's _sum.amount is lifted
+ * from Prisma Decimal|null to Money at the boundary (null → new Money(0)).
+ *
+ * Consumed by: <CashFlowWidget> via buildCashFlowShape() from lib/dashboard/aggregations.ts.
+ *
+ * @param userId - must come from session.user.id (data-scoping convention)
+ * @param dateFrom - UTC midnight of the 1st of the target calendar month (inclusive)
+ * @param dateTo - UTC midnight of the 1st of the next calendar month (exclusive)
+ */
+export async function sumIncomeExpenseByCurrencyForUser(
+  userId: string,
+  dateFrom: Date,
+  dateTo: Date,
+): Promise<CashFlowAggregateRow[]> {
+  const rows = await prisma.transaction.groupBy({
+    by: ["currency", "type"],
+    where: {
+      userId,
+      type: { in: ["INCOME", "EXPENSE"] },
+      archivedAt: null,
+      date: { gte: dateFrom, lt: dateTo },
+    },
+    _sum: { amount: true },
+  })
+
+  return rows.map((r) => ({
+    currency: r.currency,
+    type: r.type as "INCOME" | "EXPENSE",
+    _sum: { amount: r._sum.amount != null ? new Money(r._sum.amount) : new Money(0) },
+  }))
+}
+
+/** Row shape returned by sumIncomeExpenseByCurrencyForUser and consumed by buildCashFlowShape. */
+export type CashFlowAggregateRow = {
+  currency: string
+  type: "INCOME" | "EXPENSE"
+  _sum: { amount: Money }
 }
 
 // ---------------------------------------------------------------------------
