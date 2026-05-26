@@ -548,6 +548,108 @@ export async function sumAmountsForAccount(userId: string, accountId: string): P
 }
 
 // ---------------------------------------------------------------------------
+// getMostUsedExpenseCurrencyForUser (feature 009 — budget default-currency helper)
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the most-frequently-used currency of non-archived EXPENSE transactions
+ * in the last `sinceDays` days for the given user. Used by the create-budget form
+ * to suggest a sensible default currency (R4, Clarification Q2).
+ *
+ * Tie-break: alphabetically-first currency wins (deterministic via orderBy currency asc).
+ *
+ * @param userId - must come from session.user.id (data-scoping convention)
+ * @param sinceDays - defaults to 90 per Clarification Q2
+ */
+export async function getMostUsedExpenseCurrencyForUser(
+  userId: string,
+  sinceDays = 90,
+): Promise<string | null> {
+  const since = new Date()
+  since.setUTCDate(since.getUTCDate() - sinceDays)
+  since.setUTCHours(0, 0, 0, 0)
+
+  const rows = await prisma.transaction.groupBy({
+    by: ["currency"],
+    where: {
+      userId,
+      type: "EXPENSE",
+      archivedAt: null,
+      date: { gte: since },
+    },
+    _count: { _all: true },
+    orderBy: [
+      { _count: { currency: "desc" } }, // most COUNT first
+      { currency: "asc" }, // tie-break: alphabetical
+    ],
+    take: 1,
+  })
+
+  return rows[0]?.currency ?? null
+}
+
+// ---------------------------------------------------------------------------
+// sumExpenseByCategoryForBudgetsForUser (feature 009 — batched actuals aggregation)
+// ---------------------------------------------------------------------------
+
+/** Row shape returned by sumExpenseByCategoryForBudgetsForUser. */
+export type BudgetActualsRow = {
+  categoryId: string
+  currency: string
+  /** Lifted from Prisma Decimal|null to Money at the boundary. EXPENSE sums are negative per signed-amount convention. */
+  _sum: { amount: Money }
+}
+
+/**
+ * Aggregate EXPENSE actuals per (categoryId, currency) over a date range.
+ * Used by the budgets module to compute actuals for all budgets sharing the same
+ * period window in a SINGLE Prisma groupBy round-trip (R3).
+ *
+ * Short-circuits if categoryIds or currencies is empty (no round-trip).
+ *
+ * NOTE: The returned _sum.amount carries the stored negative sign for EXPENSE rows.
+ * The CALLER applies .abs() before storing in the actuals Map (FR-010 second sentence).
+ *
+ * @param userId - must come from session.user.id (data-scoping convention)
+ * @param dateFrom - UTC midnight (inclusive)
+ * @param dateTo - UTC midnight of first-of-next-period (exclusive)
+ * @param categoryIds - restrict to these budgeted categories
+ * @param currencies - restrict to these budgeted currencies
+ */
+export async function sumExpenseByCategoryForBudgetsForUser(
+  userId: string,
+  dateFrom: Date,
+  dateTo: Date,
+  categoryIds: string[],
+  currencies: string[],
+): Promise<BudgetActualsRow[]> {
+  if (categoryIds.length === 0 || currencies.length === 0) return []
+
+  const rows = await prisma.transaction.groupBy({
+    by: ["categoryId", "currency"],
+    where: {
+      userId,
+      type: "EXPENSE",
+      archivedAt: null,
+      date: { gte: dateFrom, lt: dateTo },
+      categoryId: { in: categoryIds },
+      currency: { in: currencies },
+    },
+    _sum: { amount: true },
+  })
+
+  return rows
+    .filter((r) => r.categoryId !== null)
+    .map((r) => ({
+      categoryId: r.categoryId as string,
+      currency: r.currency,
+      _sum: {
+        amount: r._sum.amount != null ? new Money(r._sum.amount) : new Money(0),
+      },
+    }))
+}
+
+// ---------------------------------------------------------------------------
 // sumAmountsForAccountsBatch
 // ---------------------------------------------------------------------------
 
