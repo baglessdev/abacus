@@ -3,6 +3,7 @@
 // Feature 004 adds Account + AccountType (the first money-touching domain model).
 // Feature 006 adds Category + CategoryKind (the second domain model; non-money-touching).
 // Feature 007 adds Transaction + TransactionType (the third domain model; the keystone money-correctness feature).
+// Feature 009 adds Budget + BudgetPeriod (the fifth domain entity; the first with a partial-unique-index invariant).
 
 generator client {
   provider = "prisma-client-js"
@@ -22,6 +23,7 @@ model User {
   accounts     Account[]     // back-relation from feature 004
   categories   Category[]    // back-relation from feature 006
   transactions Transaction[] // back-relation from feature 007
+  budgets      Budget[]      // back-relation from feature 009
 }
 
 model Account {
@@ -67,6 +69,7 @@ model Category {
   updatedAt  DateTime     @updatedAt
 
   transactions Transaction[] // back-relation from feature 007
+  budgets      Budget[]      // back-relation from feature 009
 
   @@index([userId])
   @@index([userId, archivedAt])
@@ -120,4 +123,36 @@ enum TransactionType {
   INCOME
   EXPENSE
   TRANSFER
+}
+
+// ---------------------------------------------------------------------------
+// Feature 009 — Budget + BudgetPeriod
+// ---------------------------------------------------------------------------
+
+model Budget {
+  id         String       @id @default(cuid())
+  userId     String
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  period     BudgetPeriod
+  amount     Decimal      @db.Decimal(20, 8)
+  currency   String       @db.Char(3)
+  startDate  DateTime     @db.Date
+  endDate    DateTime?    @db.Date
+  archivedAt DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([userId, archivedAt])
+  @@index([userId, categoryId])
+  // Partial unique index (`(userId, categoryId, currency, period) WHERE archivedAt IS NULL`)
+  // is added via raw SQL in the migration file (see migrations/<timestamp>_add_budget/migration.sql).
+  // Prisma 7's @@unique([...], where: ...) does not express filtered indexes; the migration is the
+  // source of truth for the schema. See research.md R1.
+}
+
+enum BudgetPeriod {
+  MONTHLY
+  YEARLY
 }

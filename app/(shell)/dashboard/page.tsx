@@ -29,6 +29,7 @@ import { WidgetErrorBoundary } from "./_components/widget-error-boundary"
 import { NetWorthWidget } from "./_components/net-worth-widget"
 import { CashFlowWidget } from "./_components/cash-flow-widget"
 import { RecentTransactionsWidget } from "./_components/recent-transactions-widget"
+import { BudgetsWidget } from "./_components/budgets-widget"
 
 export default async function DashboardPage() {
   // 1. Auth gate — defense-in-depth on top of middleware.ts (FR-025).
@@ -70,6 +71,11 @@ export default async function DashboardPage() {
 
         <WidgetErrorBoundary title="This month">
           <CashFlowWidget userId={userId} />
+        </WidgetErrorBoundary>
+
+        {/* NEW — Budgets widget (feature 009-budgets US4, FR-027, FR-028, FR-029) */}
+        <WidgetErrorBoundary title="Budgets">
+          <BudgetsWidget userId={userId} />
         </WidgetErrorBoundary>
 
         <div className="md:col-span-2">
